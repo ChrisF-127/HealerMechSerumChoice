@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <LanguageData>
 
-	<SY_HMSC.DialogTitle>Healer Mech Serum</SY_HMSC.DialogTitle>
-	<SY_HMSC.ChooseHediffToHeal>Select health condition to heal:</SY_HMSC.ChooseHediffToHeal>
-	<SY_HMSC.NoHediffsToHeal>No curable health conditions</SY_HMSC.NoHediffsToHeal>
+	<SY_HMSC.DialogTitle>Healer Mech Serum - Selection</SY_HMSC.DialogTitle>
+	<SY_HMSC.NoHediffsToHeal>No curable health conditions found</SY_HMSC.NoHediffsToHeal>
+	
+	<SY_HMSC.Part>Part</SY_HMSC.Part>
+	<SY_HMSC.HealthCondition>Condition</SY_HMSC.HealthCondition>
+	<SY_HMSC.Severity>Severity</SY_HMSC.Severity>
 	
 </LanguageData>

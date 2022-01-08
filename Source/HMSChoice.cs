@@ -78,7 +78,7 @@ namespace HMSChoice
 		private readonly CompUsable_FixHealthConditionChoice Choice;
 
 		private Vector2 scrollPosition = Vector2.zero;
-		public override Vector2 InitialSize => new Vector2(400f, 200f);
+		public override Vector2 InitialSize => new Vector2(500f, 500f);
 
 		public Dialog_HediffSelection(List<Hediff> hediffs, CompUsable_FixHealthConditionChoice choice, Action action)
 		{
@@ -97,9 +97,9 @@ namespace HMSChoice
 
 		public override void DoWindowContents(Rect inRect)
 		{
+			var oriColor = GUI.color;
 			var oriFont = Text.Font;
 			var dialogTitle = "SY_HMSC.DialogTitle".Translate();
-			var dialogText = "SY_HMSC.ChooseHediffToHeal".Translate();
 
 			float y = inRect.y;
 			Text.Font = GameFont.Medium;
@@ -107,24 +107,60 @@ namespace HMSChoice
 			y += 42f;
 
 			Text.Font = GameFont.Small;
-			Rect outRect = new Rect(inRect.x, y, inRect.width, inRect.height - 35f - 5f - y);
-			float width = outRect.width - 16f;
-			Rect viewRect = new Rect(0f, 0f, width, Text.CalcHeight(dialogText, width) + CalcOptionsHeight(width));
-			Widgets.BeginScrollView(outRect, ref scrollPosition, viewRect);
-			Widgets.Label(new Rect(0f, 0f, viewRect.width, viewRect.height - CalcOptionsHeight(width)), dialogText);
 
+			float width = inRect.width - 16f;
+			var dialogTextHeight = Text.CalcHeight("text", width);
+			var rect = new Rect(10f, y, width - 10f, dialogTextHeight);
+			var x = rect.x;
+			var w = GetPartLabelWidth(rect.width);
+			Widgets.Label(
+				new Rect(x, rect.y, w, rect.height),
+				"SY_HMSC.Part".Translate());
+			x += w + 4f;
+			w = GetHediffLabelWidth(rect.width);
+			Widgets.Label(
+				new Rect(x, rect.y, w, rect.height),
+				"SY_HMSC.HealthCondition".Translate());
+			x += w + 4f;
+			w = GetSeverityLabelWidth(rect.width);
+			Widgets.Label(
+				new Rect(x, rect.y, w, rect.height),
+				"SY_HMSC.Severity".Translate());
+			y += dialogTextHeight;
+
+			GUI.color = Widgets.SeparatorLineColor;
+			Widgets.DrawLineHorizontal(0f, y, width);
+			GUI.color = oriColor;
+
+			Rect outRect = new Rect(inRect.x, y, inRect.width, inRect.height - 35f - 5f - y);
+			Rect viewRect = new Rect(0f, 0f, width, CalcOptionsHeight(width));
+			Widgets.BeginScrollView(outRect, ref scrollPosition, viewRect);
+
+			var totalHeight = 0f;
+			y = 0;
 			for (int i = 0; i < Hediffs.Count; i++)
 			{
 				var hediff = Hediffs[i];
+				var partLabel = hediff.Part?.Label.CapitalizeFirst() ?? "WholeBody".Translate();
 				var hediffLabel = hediff.Label.CapitalizeFirst();
+				var severityLabel = hediff.SeverityLabel;
 				if (!string.IsNullOrEmpty(hediffLabel))
 				{
-					Rect rect = new Rect(24f, viewRect.height - CalcOptionsHeight(width) + (Text.CalcHeight(hediffLabel, width) + 12f) * i + 8f, viewRect.width - 20f, Text.CalcHeight(hediffLabel, width));
+					var hediffHeight = CalcHediffHeight(hediff, width);
+					rect = new Rect(
+						10f,
+						y + 8f, 
+						viewRect.width - 10f,
+						hediffHeight);
+
 					if (Mouse.IsOver(rect))
 						Widgets.DrawHighlight(rect);
 
-					if (Widgets.RadioButtonLabeled(rect, hediffLabel, SelectedHediff == hediff))
+					if (RadioButtonHediff(rect, partLabel, hediffLabel, severityLabel, SelectedHediff == hediff))
 						SelectedHediff = hediff;
+
+					y += hediffHeight + 12f;
+					totalHeight += hediffHeight + 12f;
 				}
 			}
 			Widgets.EndScrollView();
@@ -146,12 +182,57 @@ namespace HMSChoice
 			Text.Font = oriFont;
 		}
 
-		private float CalcOptionsHeight(float width)
+		private bool RadioButtonHediff(Rect rect, string partLabel, string hediffLabel, string severityLabel, bool chosen)
 		{
-			float num = 0f;
-			foreach (var hediff in Hediffs)
-				num += Text.CalcHeight(hediff.Label, width);
+			TextAnchor anchor = Text.Anchor;
+			Text.Anchor = TextAnchor.MiddleLeft;
+
+			var x = rect.x;
+			var width = GetPartLabelWidth(rect.width);
+			Widgets.Label(
+				new Rect(x, rect.y, width, rect.height),
+				partLabel);
+			x += width + 4f;
+			width = GetHediffLabelWidth(rect.width);
+			Widgets.Label(
+				new Rect(x, rect.y, width, rect.height),
+				hediffLabel);
+			x += width + 4f;
+			width = GetSeverityLabelWidth(rect.width);
+			Widgets.Label(
+				new Rect(x, rect.y, width, rect.height),
+				severityLabel);
+			//x += width + 4f;
+
+			Text.Anchor = anchor;
+
+			bool num = Widgets.ButtonInvisible(rect);
+			if (num && !chosen)
+				SoundDefOf.Tick_Tiny.PlayOneShotOnCamera();
+
+			Widgets.RadioButtonDraw(
+				rect.x + rect.width - 24f, 
+				rect.y + rect.height / 2f - 12f, 
+				chosen);
 			return num;
 		}
+
+		private float CalcOptionsHeight(float width)
+		{
+			float height = 0f;
+			foreach (var hediff in Hediffs)
+				height += CalcHediffHeight(hediff, width) + 12f;
+			return height;
+		}
+
+		private float CalcHediffHeight(Hediff hediff, float width) =>
+			Mathf.Max(Text.CalcHeight(hediff.Part?.Label, GetPartLabelWidth(width)), Text.CalcHeight(hediff.Label, GetHediffLabelWidth(width)));
+
+		private float GetPartLabelWidth(float width) =>
+			(width - 24f) * (2f / 6f) - 4f;
+		private float GetHediffLabelWidth(float width) =>
+			(width - 24f) * (3f / 6f) - 4f;
+		private float GetSeverityLabelWidth(float width) =>
+			(width - 24f) * (1f / 6f) - 4f;
 	}
 }
