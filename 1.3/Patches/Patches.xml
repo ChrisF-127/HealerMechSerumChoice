@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Patch>
+
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/ThingDef[defName="MechSerumHealer"]/comps/li[@Class="CompProperties_Usable"]</xpath>
+		<value>
+			<compClass>HMSChoice.CompUsable_FixHealthConditionChoice</compClass>
+		</value>
+	</Operation>
+
+	<Operation Class="PatchOperationReplace">
+		<xpath>/Defs/ThingDef[defName="MechSerumHealer"]/comps/li[@Class="CompProperties_UseEffect" and compClass="CompUseEffect_FixWorstHealthCondition"]/compClass</xpath>
+		<value>
+			<compClass>HMSChoice.CompUseEffect_FixHealthConditionChoice</compClass>
+		</value>
+	</Operation>
+	<Operation Class="PatchOperationReplace">
+		<xpath>/Defs/ThingDef[defName="MechSerumHealer"]/comps/li[@Class="CompProperties_UseEffect" and compClass="CompUseEffect_DestroySelf"]/compClass</xpath>
+		<value>
+			<compClass>HMSChoice.CompUseEffect_DestroySelf_FixHealthConditionChoice</compClass>
+		</value>
+	</Operation>
+
+</Patch>
