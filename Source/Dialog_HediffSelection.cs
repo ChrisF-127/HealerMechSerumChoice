@@ -6,98 +6,46 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using Verse;
-using Verse.AI;
 using Verse.Sound;
 
 namespace HMSChoice
 {
-	public class CompUsable_FixHealthConditionChoice : CompUsable
-	{
-		public Hediff SelectedHediff;
-
-		public override void TryStartUseJob(Pawn pawn, LocalTargetInfo extraTarget)
-		{
-			if (!pawn.CanReserveAndReach(parent, PathEndMode.Touch, Danger.Deadly) || !CanBeUsedBy(pawn, out var _))
-				return;
-
-			SelectedHediff = null;
-
-			var hediffs = pawn?.health?.hediffSet?.hediffs?.FindAll((Hediff hediff) => IsValidHediff(pawn, hediff));
-			hediffs.SortByDescending((hediff) => HealthCardUtility.GetListPriority(hediff.Part));
-			if (hediffs?.Count > 0)
-				Find.WindowStack.Add(new Dialog_HediffSelection(hediffs, this, StartJob));
-			else
-			{
-				Messages.Message("SY_HMSC.NoHediffsToHeal".Translate(), MessageTypeDefOf.RejectInput, false);
-				return;
-			}
-
-			void StartJob()
-			{
-				Job job = extraTarget.IsValid ? JobMaker.MakeJob(Props.useJob, parent, extraTarget) : JobMaker.MakeJob(Props.useJob, parent);
-				pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
-			}
-		}
-
-		private bool IsValidHediff(Pawn pawn, Hediff hediff) =>
-			hediff.Visible
-			&& hediff.def.isBad
-			&& hediff.def.everCurableByItem
-			&& !hediff.FullyImmune()
-			&& !(hediff is Hediff_MissingPart && 
-				(pawn.health.hediffSet.PartOrAnyAncestorHasDirectlyAddedParts(hediff.Part) || (hediff.Part.parent != null && pawn.health.hediffSet.PartIsMissing(hediff.Part.parent))));
-	}
-
-	public class CompUseEffect_FixHealthConditionChoice : CompUseEffect
-	{
-		public override void DoEffect(Pawn usedBy)
-		{
-			var choice = parent.GetComp<CompUsable_FixHealthConditionChoice>();
-			if (choice?.SelectedHediff == null)
-				return;
-
-			var hediff = choice.SelectedHediff;
-			base.DoEffect(usedBy);
-			TaggedString taggedString = hediff is Hediff_MissingPart ? HealthUtility.Cure(hediff.Part, usedBy) : HealthUtility.Cure(choice.SelectedHediff);
-			if (PawnUtility.ShouldSendNotificationAbout(usedBy))
-				Messages.Message(taggedString, usedBy, MessageTypeDefOf.PositiveEvent);
-		}
-	}
-
-	public class CompUseEffect_DestroySelf_FixHealthConditionChoice : CompUseEffect
-	{
-		public override float OrderPriority => -1000f;
-
-		public override void DoEffect(Pawn usedBy)
-		{
-			var choice = parent.GetComp<CompUsable_FixHealthConditionChoice>();
-			if (choice?.SelectedHediff == null)
-				return;
-
-			base.DoEffect(usedBy);
-			parent.SplitOff(1).Destroy();
-		}
-	}
-
 	public class Dialog_HediffSelection : Window
 	{
 		private readonly List<Hediff> Hediffs;
 		private Hediff SelectedHediff;
 
-		private readonly Action Action;
-		private readonly CompUsable_FixHealthConditionChoice Choice;
+		private readonly Action<Hediff> Action;
 
 		private Vector2 scrollPosition = Vector2.zero;
 		public override Vector2 InitialSize => new Vector2(500f, 500f);
 
-		public Dialog_HediffSelection(List<Hediff> hediffs, CompUsable_FixHealthConditionChoice choice, Action action)
+		public static void CreateDialog(Pawn pawn, Action<Hediff> action)
+		{
+			if (pawn == null)
+			{
+				Log.Error($"Attempted creating {nameof(Dialog_HediffSelection)} with null pawn");
+				return;
+			}
+
+			var hediffs = pawn?.health?.hediffSet?.hediffs?.FindAll((Hediff hediff) => IsValidHediff(pawn, hediff));
+			hediffs.SortByDescending((hediff) => HealthCardUtility.GetListPriority(hediff.Part));
+			if (hediffs?.Count > 0)
+				Find.WindowStack.Add(new Dialog_HediffSelection(hediffs, action));
+			else
+			{
+				Messages.Message("SY_HMSC.NoHediffsToHeal".Translate(), MessageTypeDefOf.RejectInput, false);
+				return;
+			}
+		}
+
+		private Dialog_HediffSelection(List<Hediff> hediffs, Action<Hediff> action)
 		{
 			if (!(hediffs?.Count > 0))
-				Log.Error($"{nameof(Dialog_HediffSelection)} created with empty Hediff list! (null: {hediffs == null})");
+				Log.Error($"{nameof(Dialog_HediffSelection)} created with empty Hediff list (null: {hediffs == null})");
 			Hediffs = hediffs ?? new List<Hediff>();
 			SelectedHediff = null;
 
-			Choice = choice;
 			Action = action;
 
 			forcePause = true;
@@ -117,7 +65,7 @@ namespace HMSChoice
 			y += 42f;
 
 			Text.Font = GameFont.Small;
-			
+
 			float width = inRect.width - 16f;
 			var dialogTextHeight = Text.CalcHeight("text", width);
 			var rect = new Rect(10f, y, width - 10f, dialogTextHeight);
@@ -153,7 +101,7 @@ namespace HMSChoice
 				var hediffHeight = CalcHediffHeight(hediff, width);
 				rect = new Rect(
 					10f,
-					y + 4f, 
+					y + 4f,
 					viewRect.width - 10f,
 					hediffHeight);
 
@@ -169,20 +117,19 @@ namespace HMSChoice
 			Widgets.EndScrollView();
 
 			if (Widgets.ButtonText(new Rect(0f, inRect.height - 35f, inRect.width / 2f - 20f, 35f), "CancelButton".Translate(), doMouseoverSound: false))
-				Close();
+				Close(null);
 
-			if (Hediffs.Count > 0)
-			{
-				if (SelectedHediff == null 
-					|| !Widgets.ButtonText(new Rect(inRect.width / 2f + 20f, inRect.height - 35f, inRect.width / 2f - 20f, 35f), "Confirm".Translate(), doMouseoverSound: false))
-					return;
-
-				Choice.SelectedHediff = SelectedHediff;
-				Close();
-				Action.Invoke();
-			}
+			if (SelectedHediff != null 
+				&& Widgets.ButtonText(new Rect(inRect.width / 2f + 20f, inRect.height - 35f, inRect.width / 2f - 20f, 35f), "Confirm".Translate(), doMouseoverSound: false))
+				Close(SelectedHediff);
 
 			Text.Font = oriFont;
+		}
+
+		public void Close(Hediff hediff)
+		{
+			Close();
+			Action.Invoke(hediff);
 		}
 
 		private bool RadioButtonHediff(Rect rect, Hediff hediff, bool chosen)
@@ -228,8 +175,8 @@ namespace HMSChoice
 				SoundDefOf.Tick_Tiny.PlayOneShotOnCamera();
 
 			Widgets.RadioButtonDraw(
-				rect.x + rect.width - 24f, 
-				rect.y + rect.height / 2f - 12f, 
+				rect.x + rect.width - 24f,
+				rect.y + rect.height / 2f - 12f,
 				chosen);
 			return num;
 		}
@@ -251,5 +198,15 @@ namespace HMSChoice
 			(width - 24f) * (3f / 6f) - 4f;
 		private float GetSeverityLabelWidth(float width) =>
 			(width - 24f) * (1f / 6f) - 4f;
+
+
+		private static bool IsValidHediff(Pawn pawn, Hediff hediff) =>
+			hediff.Visible
+			&& hediff.def.isBad
+			&& hediff.def.everCurableByItem
+			&& !hediff.FullyImmune()
+			&& !(hediff is Hediff_MissingPart
+				&& hediff.Part != null
+				&& (pawn.health.hediffSet.PartOrAnyAncestorHasDirectlyAddedParts(hediff.Part) || (hediff.Part.parent != null && pawn.health.hediffSet.PartIsMissing(hediff.Part.parent))));
 	}
 }

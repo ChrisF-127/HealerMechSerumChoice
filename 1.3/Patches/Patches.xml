@@ -20,5 +20,12 @@
 			<compClass>HMSChoice.CompUseEffect_DestroySelf_FixHealthConditionChoice</compClass>
 		</value>
 	</Operation>
+	
+	<Operation Class="PatchOperationReplace">
+		<xpath>/Defs/RecipeDef[defName="AdministerMechSerumHealer"]/workerClass</xpath>
+		<value>
+			<workerClass>HMSChoice.Recipe_AdministerUsableItem_FixHealthConditionChoice</workerClass>
+		</value>
+	</Operation>
 
 </Patch>

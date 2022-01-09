@@ -41,8 +41,12 @@
     <Reference Include="System.Net.Http" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="HMSChoice.cs" />
+    <Compile Include="CompUseEffect_DestroySelf_FixHealthConditionChoice.cs" />
+    <Compile Include="CompUseEffect_FixHealthConditionChoice.cs" />
+    <Compile Include="CompUsable_FixHealthConditionChoice.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Dialog_HediffSelection.cs" />
+    <Compile Include="Recipe_AdministerUsableItem_FixHealthConditionChoice.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Krafs.Rimworld.Ref">
