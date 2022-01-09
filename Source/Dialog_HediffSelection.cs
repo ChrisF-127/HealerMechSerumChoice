@@ -12,6 +12,7 @@ namespace HMSChoice
 {
 	public class Dialog_HediffSelection : Window
 	{
+		private string DialogTitle;
 		private readonly List<Hediff> Hediffs;
 		private Hediff SelectedHediff;
 
@@ -28,19 +29,24 @@ namespace HMSChoice
 				return;
 			}
 
+			var name = pawn.Name.ToStringShort;
+			var title = $"{"SY_HMSC.DialogTitle".Translate()}: {name}";
+
 			var hediffs = pawn?.health?.hediffSet?.hediffs?.FindAll((Hediff hediff) => IsValidHediff(pawn, hediff));
 			hediffs.SortByDescending((hediff) => HealthCardUtility.GetListPriority(hediff.Part));
 			if (hediffs?.Count > 0)
-				Find.WindowStack.Add(new Dialog_HediffSelection(hediffs, execute));
+				Find.WindowStack.Add(new Dialog_HediffSelection(title, hediffs, execute));
 			else
 			{
-				Messages.Message("SY_HMSC.NoHediffsToHeal".Translate(), MessageTypeDefOf.RejectInput, false);
+				Messages.Message($"{"SY_HMSC.NoHediffsToHeal".Translate()}: {name}", MessageTypeDefOf.RejectInput, false);
 				return;
 			}
 		}
 
-		private Dialog_HediffSelection(List<Hediff> hediffs, Action<Hediff> execute)
+		private Dialog_HediffSelection(string title, List<Hediff> hediffs, Action<Hediff> execute)
 		{
+			DialogTitle = title;
+
 			if (!(hediffs?.Count > 0))
 				Log.Error($"{nameof(Dialog_HediffSelection)} created with empty Hediff list (null: {hediffs == null})");
 			Hediffs = hediffs ?? new List<Hediff>();
@@ -57,11 +63,10 @@ namespace HMSChoice
 		{
 			var oriColor = GUI.color;
 			var oriFont = Text.Font;
-			var dialogTitle = "SY_HMSC.DialogTitle".Translate();
 
 			float y = inRect.y;
 			Text.Font = GameFont.Medium;
-			Widgets.Label(new Rect(0f, y, inRect.width, 42f), dialogTitle);
+			Widgets.Label(new Rect(0f, y, inRect.width, 42f), DialogTitle);
 			y += 42f;
 
 			Text.Font = GameFont.Small;
