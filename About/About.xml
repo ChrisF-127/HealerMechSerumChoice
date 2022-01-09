@@ -18,5 +18,5 @@
 	<loadAfter>
 		<li>brrainz.harmony</li>
 	</loadAfter>
-	<description></description>
+	<description>A mod that lets you choose which health condition to heal when using a Healer Mech Serum.</description>
 </ModMetaData>
