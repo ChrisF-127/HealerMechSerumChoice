@@ -22,7 +22,8 @@ namespace HMSChoice
 
 			SelectedHediff = null;
 
-			var hediffs = pawn?.health?.hediffSet?.hediffs?.FindAll((Hediff x) => x.def.isBad && x.def.everCurableByItem && x.Visible);
+			var hediffs = pawn?.health?.hediffSet?.hediffs?.FindAll((Hediff hediff) => IsValidHediff(pawn, hediff));
+			hediffs.SortByDescending((hediff) => HealthCardUtility.GetListPriority(hediff.Part));
 			if (hediffs?.Count > 0)
 				Find.WindowStack.Add(new Dialog_HediffSelection(hediffs, this, StartJob));
 			else
@@ -37,6 +38,14 @@ namespace HMSChoice
 				pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
 			}
 		}
+
+		private bool IsValidHediff(Pawn pawn, Hediff hediff) =>
+			hediff.Visible
+			&& hediff.def.isBad
+			&& hediff.def.everCurableByItem
+			&& !hediff.FullyImmune()
+			&& !(hediff is Hediff_MissingPart && 
+				(pawn.health.hediffSet.PartOrAnyAncestorHasDirectlyAddedParts(hediff.Part) || (hediff.Part.parent != null && pawn.health.hediffSet.PartIsMissing(hediff.Part.parent))));
 	}
 
 	public class CompUseEffect_FixHealthConditionChoice : CompUseEffect
@@ -47,8 +56,9 @@ namespace HMSChoice
 			if (choice?.SelectedHediff == null)
 				return;
 
+			var hediff = choice.SelectedHediff;
 			base.DoEffect(usedBy);
-			TaggedString taggedString = HealthUtility.Cure(choice.SelectedHediff);
+			TaggedString taggedString = hediff is Hediff_MissingPart ? HealthUtility.Cure(hediff.Part, usedBy) : HealthUtility.Cure(choice.SelectedHediff);
 			if (PawnUtility.ShouldSendNotificationAbout(usedBy))
 				Messages.Message(taggedString, usedBy, MessageTypeDefOf.PositiveEvent);
 		}
@@ -107,7 +117,7 @@ namespace HMSChoice
 			y += 42f;
 
 			Text.Font = GameFont.Small;
-
+			
 			float width = inRect.width - 16f;
 			var dialogTextHeight = Text.CalcHeight("text", width);
 			var rect = new Rect(10f, y, width - 10f, dialogTextHeight);
@@ -138,30 +148,23 @@ namespace HMSChoice
 
 			var totalHeight = 0f;
 			y = 0;
-			for (int i = 0; i < Hediffs.Count; i++)
+			foreach (var hediff in Hediffs)
 			{
-				var hediff = Hediffs[i];
-				var partLabel = hediff.Part?.Label.CapitalizeFirst() ?? "WholeBody".Translate();
-				var hediffLabel = hediff.Label.CapitalizeFirst();
-				var severityLabel = hediff.SeverityLabel;
-				if (!string.IsNullOrEmpty(hediffLabel))
-				{
-					var hediffHeight = CalcHediffHeight(hediff, width);
-					rect = new Rect(
-						10f,
-						y + 8f, 
-						viewRect.width - 10f,
-						hediffHeight);
+				var hediffHeight = CalcHediffHeight(hediff, width);
+				rect = new Rect(
+					10f,
+					y + 4f, 
+					viewRect.width - 10f,
+					hediffHeight);
 
-					if (Mouse.IsOver(rect))
-						Widgets.DrawHighlight(rect);
+				if (Mouse.IsOver(rect))
+					Widgets.DrawHighlight(rect);
 
-					if (RadioButtonHediff(rect, partLabel, hediffLabel, severityLabel, SelectedHediff == hediff))
-						SelectedHediff = hediff;
+				if (RadioButtonHediff(rect, hediff, SelectedHediff == hediff))
+					SelectedHediff = hediff;
 
-					y += hediffHeight + 12f;
-					totalHeight += hediffHeight + 12f;
-				}
+				y += hediffHeight + 8f;
+				totalHeight += hediffHeight + 8f;
 			}
 			Widgets.EndScrollView();
 
@@ -182,29 +185,43 @@ namespace HMSChoice
 			Text.Font = oriFont;
 		}
 
-		private bool RadioButtonHediff(Rect rect, string partLabel, string hediffLabel, string severityLabel, bool chosen)
+		private bool RadioButtonHediff(Rect rect, Hediff hediff, bool chosen)
 		{
+			var oriColor = GUI.color;
+			var pawn = hediff.pawn;
+
 			TextAnchor anchor = Text.Anchor;
 			Text.Anchor = TextAnchor.MiddleLeft;
-
 			var x = rect.x;
+
+			// Part
+			if (hediff.Part == null)
+				GUI.color = Color.red;
+			else
+				GUI.color = HealthUtility.GetPartConditionLabel(pawn, hediff.Part).second;
 			var width = GetPartLabelWidth(rect.width);
 			Widgets.Label(
 				new Rect(x, rect.y, width, rect.height),
-				partLabel);
+				hediff.Part?.LabelCap ?? "WholeBody".Translate());
 			x += width + 4f;
+
+			// Condition
+			GUI.color = hediff.LabelColor;
 			width = GetHediffLabelWidth(rect.width);
 			Widgets.Label(
 				new Rect(x, rect.y, width, rect.height),
-				hediffLabel);
+				hediff.LabelCap);
 			x += width + 4f;
+
+			// Severity
 			width = GetSeverityLabelWidth(rect.width);
 			Widgets.Label(
 				new Rect(x, rect.y, width, rect.height),
-				severityLabel);
+				hediff.SeverityLabel);
 			//x += width + 4f;
 
 			Text.Anchor = anchor;
+			GUI.color = oriColor;
 
 			bool num = Widgets.ButtonInvisible(rect);
 			if (num && !chosen)
@@ -221,7 +238,7 @@ namespace HMSChoice
 		{
 			float height = 0f;
 			foreach (var hediff in Hediffs)
-				height += CalcHediffHeight(hediff, width) + 12f;
+				height += CalcHediffHeight(hediff, width) + 8f;
 			return height;
 		}
 
