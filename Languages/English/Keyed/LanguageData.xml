@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <LanguageData>
 
-	<SY_HMSC.DialogTitle>Healer Mech Serum</SY_HMSC.DialogTitle>
-	<SY_HMSC.NoHediffsToHeal>No curable health conditions found</SY_HMSC.NoHediffsToHeal>
+	<SY_HMSC.DialogTitle>Healer Mech Serum: {0_nameDef}</SY_HMSC.DialogTitle>
+	<SY_HMSC.NoHediffsToHeal>{0_nameDef}: no curable health conditions found</SY_HMSC.NoHediffsToHeal>
 	
 	<SY_HMSC.Part>Part</SY_HMSC.Part>
 	<SY_HMSC.HealthCondition>Condition</SY_HMSC.HealthCondition>

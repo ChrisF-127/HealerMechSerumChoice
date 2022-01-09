@@ -29,18 +29,14 @@ namespace HMSChoice
 				return;
 			}
 
-			var name = pawn.Name.ToStringShort;
-			var title = $"{"SY_HMSC.DialogTitle".Translate()}: {name}";
-
 			var hediffs = pawn?.health?.hediffSet?.hediffs?.FindAll((Hediff hediff) => IsValidHediff(pawn, hediff));
-			hediffs.SortByDescending((hediff) => HealthCardUtility.GetListPriority(hediff.Part));
 			if (hediffs?.Count > 0)
-				Find.WindowStack.Add(new Dialog_HediffSelection(title, hediffs, execute));
-			else
 			{
-				Messages.Message($"{"SY_HMSC.NoHediffsToHeal".Translate()}: {name}", MessageTypeDefOf.RejectInput, false);
-				return;
+				hediffs.SortByDescending((hediff) => HealthCardUtility.GetListPriority(hediff.Part));
+				Find.WindowStack.Add(new Dialog_HediffSelection("SY_HMSC.DialogTitle".Translate(pawn), hediffs, execute));
 			}
+			else
+				Messages.Message("SY_HMSC.NoHediffsToHeal".Translate(pawn), MessageTypeDefOf.RejectInput, false);
 		}
 
 		private Dialog_HediffSelection(string title, List<Hediff> hediffs, Action<Hediff> execute)
@@ -48,7 +44,7 @@ namespace HMSChoice
 			DialogTitle = title;
 
 			if (!(hediffs?.Count > 0))
-				Log.Error($"{nameof(Dialog_HediffSelection)} created with empty Hediff list (null: {hediffs == null})");
+				Log.Error($"{nameof(Dialog_HediffSelection)} created with empty Hediff list (is null: {hediffs == null})");
 			Hediffs = hediffs ?? new List<Hediff>();
 			SelectedHediff = null;
 
@@ -72,7 +68,7 @@ namespace HMSChoice
 			Text.Font = GameFont.Small;
 
 			float width = inRect.width - 16f;
-			var dialogTextHeight = Text.CalcHeight("text", width);
+			var dialogTextHeight = Text.CalcHeight("foo", width);
 			var rect = new Rect(10f, y, width - 10f, dialogTextHeight);
 			var x = rect.x;
 			var w = GetPartLabelWidth(rect.width);
