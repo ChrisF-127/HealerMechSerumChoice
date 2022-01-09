@@ -3,10 +3,8 @@ using Verse;
 
 namespace HMSChoice
 {
-	public class CompUseEffect_DestroySelf_FixHealthConditionChoice : CompUseEffect
+	public class CompUseEffect_DestroySelf_FixHealthConditionChoice : CompUseEffect_DestroySelf
 	{
-		public override float OrderPriority => -1000f;
-
 		public override void DoEffect(Pawn usedBy)
 		{
 			var hediff = parent.GetComp<CompUsable_FixHealthConditionChoice>()?.SelectedHediff;
