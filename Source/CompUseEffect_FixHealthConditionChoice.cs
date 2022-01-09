@@ -5,14 +5,15 @@ namespace HMSChoice
 {
 	public class CompUseEffect_FixHealthConditionChoice : CompUseEffect
 	{
+		public Hediff HediffToHeal = null;
+
 		public override void DoEffect(Pawn usedBy)
 		{
-			var hediff = parent.GetComp<CompUsable_FixHealthConditionChoice>()?.SelectedHediff;
-			if (hediff == null)
+			if (HediffToHeal == null)
 				return;
 
 			base.DoEffect(usedBy);
-			TaggedString taggedString = hediff is Hediff_MissingPart ? HealthUtility.Cure(hediff.Part, usedBy) : HealthUtility.Cure(hediff);
+			TaggedString taggedString = HediffToHeal is Hediff_MissingPart ? HealthUtility.Cure(HediffToHeal.Part, usedBy) : HealthUtility.Cure(HediffToHeal);
 			if (PawnUtility.ShouldSendNotificationAbout(usedBy))
 				Messages.Message(taggedString, usedBy, MessageTypeDefOf.PositiveEvent);
 		}

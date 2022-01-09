@@ -15,12 +15,12 @@ namespace HMSChoice
 		private readonly List<Hediff> Hediffs;
 		private Hediff SelectedHediff;
 
-		private readonly Action<Hediff> Action;
+		private readonly Action<Hediff> Execute;
 
 		private Vector2 scrollPosition = Vector2.zero;
 		public override Vector2 InitialSize => new Vector2(500f, 500f);
 
-		public static void CreateDialog(Pawn pawn, Action<Hediff> action)
+		public static void CreateDialog(Pawn pawn, Action<Hediff> execute)
 		{
 			if (pawn == null)
 			{
@@ -31,7 +31,7 @@ namespace HMSChoice
 			var hediffs = pawn?.health?.hediffSet?.hediffs?.FindAll((Hediff hediff) => IsValidHediff(pawn, hediff));
 			hediffs.SortByDescending((hediff) => HealthCardUtility.GetListPriority(hediff.Part));
 			if (hediffs?.Count > 0)
-				Find.WindowStack.Add(new Dialog_HediffSelection(hediffs, action));
+				Find.WindowStack.Add(new Dialog_HediffSelection(hediffs, execute));
 			else
 			{
 				Messages.Message("SY_HMSC.NoHediffsToHeal".Translate(), MessageTypeDefOf.RejectInput, false);
@@ -39,14 +39,14 @@ namespace HMSChoice
 			}
 		}
 
-		private Dialog_HediffSelection(List<Hediff> hediffs, Action<Hediff> action)
+		private Dialog_HediffSelection(List<Hediff> hediffs, Action<Hediff> execute)
 		{
 			if (!(hediffs?.Count > 0))
 				Log.Error($"{nameof(Dialog_HediffSelection)} created with empty Hediff list (null: {hediffs == null})");
 			Hediffs = hediffs ?? new List<Hediff>();
 			SelectedHediff = null;
 
-			Action = action;
+			Execute = execute;
 
 			forcePause = true;
 			absorbInputAroundWindow = true;
@@ -129,7 +129,7 @@ namespace HMSChoice
 		public void Close(Hediff hediff)
 		{
 			Close();
-			Action.Invoke(hediff);
+			Execute.Invoke(hediff);
 		}
 
 		private bool RadioButtonHediff(Rect rect, Hediff hediff, bool chosen)

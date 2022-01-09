@@ -13,31 +13,33 @@ namespace HMSChoice
 {
 	public class CompUsable_FixHealthConditionChoice : CompUsable
 	{
-		public Hediff SelectedHediff;
-
-		public override void TryStartUseJob(Pawn pawn, LocalTargetInfo extraTarget)
+		public void UsedBy_Override(Pawn p)
 		{
-			if (!pawn.CanReserveAndReach(parent, PathEndMode.Touch, Danger.Deadly) || !CanBeUsedBy(pawn, out var _))
+			if (!CanBeUsedBy(p, out var _))
 				return;
 
-			SelectedHediff = null;
-			Dialog_HediffSelection.CreateDialog(pawn, StartJob);
+			Dialog_HediffSelection.CreateDialog(p, Execute);
 
-			void StartJob(Hediff hediff)
+			void Execute(Hediff hediff)
 			{
-				SelectedHediff = hediff;
-				if (SelectedHediff != null)
+				if (hediff == null)
+					return;
+
+				try
 				{
-					Job job = extraTarget.IsValid ? JobMaker.MakeJob(Props.useJob, parent, extraTarget) : JobMaker.MakeJob(Props.useJob, parent);
-					pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
+					var comps = (from x in parent.GetComps<CompUseEffect>() orderby x.OrderPriority descending select x).ToList();
+					foreach (var comp in comps)
+					{
+						if (comp is CompUseEffect_FixHealthConditionChoice choose)
+							choose.HediffToHeal = hediff;
+						comp.DoEffect(p);
+					}
+				}
+				catch (Exception arg)
+				{
+					Log.Error($"Error in {nameof(CompUsable_FixHealthConditionChoice)}.{nameof(UsedBy_Override)}: " + arg);
 				}
 			}
-		}
-
-		public override void PostExposeData()
-		{
-			base.PostExposeData();
-			Scribe_References.Look(ref SelectedHediff, "SelectedHediff");
 		}
 	}
 }
