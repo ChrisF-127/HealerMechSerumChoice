@@ -22,7 +22,7 @@ namespace HMSChoice
 			// you cannot imagine how annoyed I am for having to do this, just because "UsedBy" is not overrideable...
 			harmony.Patch(
 				typeof(CompUsable).GetMethod("UsedBy"),
-				prefix: new HarmonyMethod(typeof(HarmonyPatches), nameof(HarmonyPatches.CompUsable_UsedBy_Prefix)));
+				prefix: new HarmonyMethod(typeof(HarmonyPatches), nameof(CompUsable_UsedBy_Prefix)));
 
 
 			// compatibility patch for More Faction Interaction's Mystical Shaman healer

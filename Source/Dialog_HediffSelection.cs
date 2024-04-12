@@ -178,7 +178,8 @@ namespace HMSChoice
 			Widgets.RadioButtonDraw(
 				rect.x + rect.width - 24f,
 				rect.y + rect.height / 2f - 12f,
-				chosen);
+				chosen,
+				false);
 			return num;
 		}
 
