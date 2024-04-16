@@ -15,7 +15,7 @@ namespace HMSChoice
 	{
 		public void UsedBy_Override(Pawn p)
 		{
-			if (!CanBeUsedBy(p))
+			if (!CanBeUsedBy(p, true))
 				return;
 
 			Dialog_HediffSelection.CreateDialog(p, Execute);
