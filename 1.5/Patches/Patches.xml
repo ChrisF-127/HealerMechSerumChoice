@@ -13,6 +13,13 @@
 			<compClass>HMSChoice.CompUseEffect_FixHealthConditionChoice</compClass>
 		</value>
 	</Operation>
+
+	<Operation Class="PatchOperationReplace">
+		<xpath>/Defs/RecipeDef[defName="AdministerMechSerumHealer"]/humanlikeOnly</xpath>
+		<value>
+			<humanlikeOnly>false</humanlikeOnly>
+		</value>
+	</Operation>
 	
 	
 	<!-- Patch "Archotech Medicine" from "More Archotech Garbage Reupload" -->
