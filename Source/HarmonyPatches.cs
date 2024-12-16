@@ -63,7 +63,7 @@ namespace HMSChoice
 					if (list[i].opcode == OpCodes.Callvirt && list[i].operand is MethodInfo mi0 && mi0.Name == "get_Humanlike"
 						&& list[i + 1].opcode == OpCodes.Brtrue_S)
 					{
-						label0 = list[++i].labels?.FirstOrDefault();
+						label0 = list[++i].operand as Label?;
 
 						list.Insert(++i, new CodeInstruction(OpCodes.Ldtoken, typeof(CompUsable_FixHealthConditionChoice)));
 						list.Insert(++i, new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Type), nameof(Type.GetTypeFromHandle))));
