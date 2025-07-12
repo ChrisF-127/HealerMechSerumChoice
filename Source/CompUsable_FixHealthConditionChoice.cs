@@ -13,7 +13,7 @@ namespace HMSChoice
 {
 	public class CompUsable_FixHealthConditionChoice : CompUsable
 	{
-		public void UsedBy_Override(Pawn p)
+		public override void UsedBy(Pawn p)
 		{
 			if (!CanBeUsedBy(p, true))
 				return;
@@ -37,7 +37,7 @@ namespace HMSChoice
 				}
 				catch (Exception arg)
 				{
-					Log.Error($"Error in {nameof(CompUsable_FixHealthConditionChoice)}.{nameof(UsedBy_Override)}: " + arg);
+					Log.Error($"Error in {nameof(CompUsable_FixHealthConditionChoice)}.{nameof(UsedBy)}: " + arg);
 				}
 			}
 		}
